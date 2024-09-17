@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title> HTML </title>
+        <meta charset="UTF-8">
+     </head>
+     <body>
+         <div class ='defenders_title'> WANTED </div>
+         <div class='timer' id='timer'> 60 </div>
+         <br>
+         <div id='players_cards_container'></div>
+         <br>
+         <div class='defenders_title'> ЗАЩИТНИКИ </div>
+         <div class ='defenders_title' id = "defenders_skill_pool"> ОБЩИЙ ПУЛ ОЧКОВ </div>
+         <div id='defenders_container'></div>
+     </body>
+     <style>
+        @font-face {
+            font-family: Rostelecom;
+            src: url('./RostelecomBasis-Regular.otf')
+        }
+
+        body{
+            background-color: #f1f3f8;
+            font-family: Rostelecom;
+        }
+        .player_pic{
+             width: 100%;
+             height: 40vh;
+             object-fit: cover;
+             object-position: 100% 15%;
+
+        }
+        .player_text_stats{
+            margin-top: 4%;
+            margin-left: 4%;
+        }
+        .player_card{
+            font-style: bold;
+            margin-left: 2%;
+            display: inline-block;
+            width : 30%;
+            background-color: #0196f0;
+            color : white;
+            overflow: clip;
+            border-radius: 5%;
+            font-size: 27px;
+        }
+        .player_skillpoints{
+        }
+        .timer, .defenders_title{
+            font-size: 40px;
+            display: flex;
+            color: white;
+            background-color: #1c2a60;
+            justify-content: center;
+        }
+     </style>
+     <script>
+         function formatTime(seconds) {
+             let hours = Math.floor(seconds / 3600);
+             let minutes = Math.floor((seconds % 3600) / 60);
+             let secs = seconds % 60;
+             return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+         }
+
+         function update_top_cards(top_players){
+             document.getElementById("players_cards_container").innerHTML = ''
+             top_players.forEach(player => {
+                 //console.log(player)
+                 let card = document.createElement('div')
+                 card.className = 'player_card'
+                 let img_path = './img/'
+                 let race = 'Раса: '
+                 if (player['character_race'] == 1){
+                     race+="Человек"
+                     img_path += 'HUMAN_'
+                 }
+                 if (player['character_race'] == 2){
+                     race+="Актурианeц"
+                     img_path += 'ACTUR_'
+                 }
+                 if (player['character_race'] == 3){
+                     race+="Звездный бродяга"
+                     img_path += 'HOBO_'
+                 }
+                 let class_ = 'Класс: '
+                 if (player['character_class'] == 1){
+                     class_ += "Штурмовик"
+                     img_path += 'TROOPER'
+                 }
+                 if (player['character_class'] == 2){
+                     class_ += "Разведчик"
+                     img_path += 'SPY'
+                 }
+                 if (player['character_class'] == 3){
+                     class_ += "Хакер"
+                     img_path += 'HACKER'
+                 }
+                 if (player['character_class'] == 0 || player['character_race'] == 0){
+                     img_path = '/img/PLACEHOLDER'
+                 }
+                 img_path += '.png'
+                 card.innerHTML = `
+                    <div style='text-align: center; font-size:30px;'> DEAD OR ALIVE </div>
+                    <img class='player_pic' src=`+ img_path+ `>
+                    <div class='player_text_stats'>
+                        <div class='player_username'>
+                            Имя: `+player['username']+` 
+                        </div>
+                        <div class='player_race'>
+                            `+race+`
+                        </div>
+                        <div class='player_class'>
+                            `+ class_ +`
+                        </div>
+                        <div class='player_skillpoints'>
+                            <span>
+                               Cила `+ player['skills']['STR']+` | 
+                            </span>
+                            <span>
+                                Ловкость `+ player['skills']['AGL']+` |
+                            </span>
+                            <span>
+                               Интелект `+ player['skills']['WIS']+` 
+                            </span>
+                        </div>
+                        <br>
+                    </div>`
+                 document.getElementById("players_cards_container").appendChild(card)
+             })
+         }
+
+    function update_defenders(defenders){
+        let container = document.getElementById("defenders_container")
+        container.innerHTML =''
+        let counter = 3;
+        let points_sum = 0
+        defenders.forEach(defender => {
+            let defender_card = document.createElement("span");
+            defender_card.innerHTML = counter + ". " + defender['username'] + " " + defender["total_skill_points"] + " ";
+            points_sum += defender["total_skill_points"]
+            if (counter % 3 == 0) {
+                container.appendChild(document.createElement("br"))
+            }
+            counter+=1;
+            container.appendChild(defender_card);
+        })
+        defenders_skill_pool.innerHTML = "ОБЩИЙ ПУЛ ОЧКОВ: " + points_sum
+    }
+    function proccess_users_data(users_data){
+        update_top_cards(users_data.slice(0, 3));
+        update_defenders(users_data.slice(3, users_data.length))
+    }
+
+    function makeGetRequest(url) {
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+            .then(response =>response.json())
+            .then(json => proccess_users_data(json))
+    }
+
+    let timeInSeconds = 3661; // 1 hour, 1 minute, and 1 second
+    function do_timer() {
+        timeInSeconds -= 1;
+        if (timeInSeconds > 0){
+            document.getElementById("timer").innerText = formatTime(timeInSeconds)
+            makeGetRequest(window.location.href + 'get_leaders?amount=100')
+        } else {
+            document.getElementById("timer").innerText = "ИГРА НАЧАЛАСЬ"
+
+        }
+        setTimeout(do_timer, 1000)
+
+    }
+    do_timer()
+</script>
+</html>

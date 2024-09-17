@@ -1,0 +1,4 @@
+newenv
+.env
+__pycache__/basis*
+__pycache__/texts*
